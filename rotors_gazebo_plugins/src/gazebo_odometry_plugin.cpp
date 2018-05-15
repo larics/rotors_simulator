@@ -89,6 +89,7 @@ void GazeboOdometryPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf) 
     random_generator_.seed(std::chrono::system_clock::now().time_since_epoch().count());
   }
   getSdfParam<std::string>(_sdf, "poseTopic", pose_pub_topic_, pose_pub_topic_);
+  getSdfParam<std::string>(_sdf, "velocityTopic", velocity_pub_topic_, velocity_pub_topic_);
   getSdfParam<std::string>(_sdf, "poseWithCovarianceTopic", pose_with_covariance_pub_topic_, pose_with_covariance_pub_topic_);
   getSdfParam<std::string>(_sdf, "positionTopic", position_pub_topic_, position_pub_topic_);
   getSdfParam<std::string>(_sdf, "transformTopic", transform_pub_topic_, transform_pub_topic_);
@@ -173,6 +174,7 @@ void GazeboOdometryPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf) 
   // simulation iteration.
   updateConnection_ = event::Events::ConnectWorldUpdateBegin(boost::bind(&GazeboOdometryPlugin::OnUpdate, this, _1));
   pose_pub_ = node_handle_->advertise<geometry_msgs::PoseStamped>(pose_pub_topic_, 1);
+  velocity_pub_ = node_handle_->advertise<geometry_msgs::TwistStamped>(velocity_pub_topic_, 1);
   pose_with_covariance_pub_ = node_handle_->advertise<geometry_msgs::PoseWithCovarianceStamped>(pose_with_covariance_pub_topic_, 1);
   position_pub_ = node_handle_->advertise<geometry_msgs::PointStamped>(position_pub_topic_, 1);
   transform_pub_ = node_handle_->advertise<geometry_msgs::TransformStamped>(transform_pub_topic_, 1);
@@ -322,6 +324,12 @@ void GazeboOdometryPlugin::OnUpdate(const common::UpdateInfo& _info) {
       pose->header = odometry->header;
       pose->pose = odometry->pose.pose;
       pose_pub_.publish(pose);
+    }
+    if (velocity_pub_.getNumSubscribers() > 0) {
+      geometry_msgs::TwistStamped velocity;
+      velocity.header = odometry->header;
+      velocity.twist = odometry->twist.twist;
+      velocity_pub_.publish(velocity);
     }
     if (pose_with_covariance_pub_.getNumSubscribers() > 0) {
       geometry_msgs::PoseWithCovarianceStampedPtr pose_with_covariance(

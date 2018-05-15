@@ -76,6 +76,7 @@ class GazeboOdometryPlugin : public ModelPlugin {
       : ModelPlugin(),
         random_generator_(random_device_()),
         pose_pub_topic_(mav_msgs::default_topics::POSE),
+        velocity_pub_topic_(mav_msgs::default_topics::VELOCITY_RELATIVE),
         pose_with_covariance_pub_topic_(mav_msgs::default_topics::POSE_WITH_COVARIANCE),
         position_pub_topic_(mav_msgs::default_topics::POSITION),
         transform_pub_topic_(mav_msgs::default_topics::TRANSFORM),
@@ -105,6 +106,7 @@ class GazeboOdometryPlugin : public ModelPlugin {
 
   std::string namespace_;
   std::string pose_pub_topic_;
+  std::string velocity_pub_topic_;
   std::string pose_with_covariance_pub_topic_;
   std::string position_pub_topic_;
   std::string transform_pub_topic_;
@@ -138,6 +140,7 @@ class GazeboOdometryPlugin : public ModelPlugin {
 
   ros::NodeHandle* node_handle_;
   ros::Publisher pose_pub_;
+  ros::Publisher velocity_pub_;
   ros::Publisher pose_with_covariance_pub_;
   ros::Publisher position_pub_;
   ros::Publisher transform_pub_;
