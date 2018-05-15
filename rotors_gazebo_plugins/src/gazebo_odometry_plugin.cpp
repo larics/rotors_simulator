@@ -89,7 +89,7 @@ void GazeboOdometryPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf) 
     random_generator_.seed(std::chrono::system_clock::now().time_since_epoch().count());
   }
   getSdfParam<std::string>(_sdf, "poseTopic", pose_pub_topic_, pose_pub_topic_);
-  getSdfParam<std::string>(_sdf, "velocityTopic", velocity_pub_topic_, velocity_pub_topic_);
+  getSdfParam<std::string>(_sdf, "velocityRelativeTopic", velocity_pub_topic_, velocity_pub_topic_);
   getSdfParam<std::string>(_sdf, "poseWithCovarianceTopic", pose_with_covariance_pub_topic_, pose_with_covariance_pub_topic_);
   getSdfParam<std::string>(_sdf, "positionTopic", position_pub_topic_, position_pub_topic_);
   getSdfParam<std::string>(_sdf, "transformTopic", transform_pub_topic_, transform_pub_topic_);
