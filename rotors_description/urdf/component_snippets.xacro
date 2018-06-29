@@ -336,7 +336,7 @@
   <!-- Macro to add a generic odometry sensor. -->
   <xacro:macro name="odometry_plugin_macro"
     params="
-      namespace odometry_sensor_suffix parent_link pose_topic velocity_relative_topic pose_with_covariance_topic
+      namespace odometry_sensor_suffix parent_link pose_topic velocity_relative_topic:='velocity_relative' pose_with_covariance_topic
       position_topic transform_topic odometry_topic parent_frame_id child_frame_id
       mass_odometry_sensor measurement_divisor measurement_delay unknown_delay
       noise_normal_position noise_normal_quaternion noise_normal_linear_velocity

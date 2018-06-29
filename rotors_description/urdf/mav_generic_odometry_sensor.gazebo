@@ -29,6 +29,7 @@
     odometry_sensor_suffix="1"
     parent_link="${namespace}/base_link"
     pose_topic="odometry_sensor1/pose"
+    velocity_relative_topic="velocity_relative"
     pose_with_covariance_topic="odometry_sensor1/pose_with_covariance"
     position_topic="odometry_sensor1/position"
     transform_topic="odometry_sensor1/transform"
