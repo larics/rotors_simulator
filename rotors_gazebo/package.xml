@@ -19,6 +19,7 @@
   <buildtool_depend>catkin</buildtool_depend>
 
   <!-- Dependencies needed to compile this package. -->
+  <build_depend>message_generation</build_depend>
   <build_depend>gazebo_plugins</build_depend>
   <build_depend>rotors_gazebo_plugins</build_depend>
   <build_depend>mav_msgs</build_depend>
@@ -35,5 +36,10 @@
   <run_depend>geometry_msgs</run_depend>
   <run_depend>roscpp</run_depend>
   <run_depend>sensor_msgs</run_depend>
+  <run_depend>message_runtime</run_depend>
+  <run_depend>rospy</run_depend>
+  <run_depend>opencv</run_depend>
+
+  <!--exec_depend>message_runtime</exec_depend-->
 
 </package>

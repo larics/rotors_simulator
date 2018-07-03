@@ -32,8 +32,8 @@ int main(int argc, char** argv){
   ros::init(argc, argv, "hovering_example");
   ros::NodeHandle nh;
   ros::Publisher trajectory_pub =
-      nh.advertise<trajectory_msgs::MultiDOFJointTrajectory>(
-      mav_msgs::default_topics::COMMAND_TRAJECTORY, 10);
+  nh.advertise<trajectory_msgs::MultiDOFJointTrajectory>(
+    mav_msgs::default_topics::COMMAND_TRAJECTORY, 10);
   ROS_INFO("Started hovering example.");
 
   std_srvs::Empty srv;
@@ -59,19 +59,26 @@ int main(int argc, char** argv){
   // Wait for 5 seconds to let the Gazebo GUI show up.
   ros::Duration(5.0).sleep();
 
-  trajectory_msgs::MultiDOFJointTrajectory trajectory_msg;
-  trajectory_msg.header.stamp = ros::Time::now();
-  Eigen::Vector3d desired_position(0.0, 0.0, 1.0);
-  double desired_yaw = 0.0;
-  mav_msgs::msgMultiDofJointTrajectoryFromPositionYaw(desired_position,
+  ros::Rate loop_rate(0.5);
+  double counter = 0;
+
+  while(ros::ok())
+  {
+    trajectory_msgs::MultiDOFJointTrajectory trajectory_msg;
+    trajectory_msg.header.stamp = ros::Time::now();
+    Eigen::Vector3d desired_position(counter, counter, counter);
+    double desired_yaw = 0.0;
+    mav_msgs::msgMultiDofJointTrajectoryFromPositionYaw(desired_position,
       desired_yaw, &trajectory_msg);
 
-  ROS_INFO("Publishing waypoint on namespace %s: [%f, %f, %f].",
-           nh.getNamespace().c_str(),
-           desired_position.x(),
-           desired_position.y(),
-           desired_position.z());
-  trajectory_pub.publish(trajectory_msg);
+    ROS_INFO("Publishing waypoint on namespace %s: [%f, %f, %f].",
+     nh.getNamespace().c_str(),
+     desired_position.x(),
+     desired_position.y(),
+     desired_position.z());
+    trajectory_pub.publish(trajectory_msg);
 
-  ros::spin();
+    loop_rate.sleep();
+    ++counter;
+  }
 }
