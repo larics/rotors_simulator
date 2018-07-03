@@ -86,7 +86,7 @@ private:
 
 void OdometryWrapperWithAlgorithm::AlgorithmMainMethod() {
     double time_start =ros::Time::now().toNSec();
-    ROS_INFO("*****time_start = %f",time_start);
+    ////ROS_INFO("*****time_start = %f",time_start);
 
     this->CalculateEucilidanDistancesMatrix();
 
@@ -97,13 +97,13 @@ void OdometryWrapperWithAlgorithm::AlgorithmMainMethod() {
     Eigen::EigenSolver<Eigen::Matrix<double,4,4>> eigen_solver_instance(weighted_laplacian_matrix_);
     Eigen::Matrix<std::complex<double>,4,4> eigen_vectors = eigen_solver_instance.eigenvectors();;
 
-    //ROS_INFO("-----Unsorted eigenvalues-----");
+    ////ROS_INFO("-----Unsorted eigenvalues-----");
     for(int i = 0; i<4; i++) {
         eigens_array_[i].eigen_value_s = eigen_solver_instance.eigenvalues()[i].real();
         eigens_array_[i].eigen_vector_s = eigen_vectors.col(i);
     }
     std::sort(eigens_array_, eigens_array_ + 4, sortingFunction); //HARDCODED!
-    //ROS_INFO("-----Sorted eigenvalues-----");
+    ////ROS_INFO("-----Sorted eigenvalues-----");
 
     this->CalculateFiedlerLaplacianDerivative();
     //this->PrintDFiedlerDL(4);
@@ -118,20 +118,20 @@ void OdometryWrapperWithAlgorithm::AlgorithmMainMethod() {
 
     //double test_value = this->GetSigmoidDerivative(cab_);
     for(int i = 0; i<12; i++) {
-        ROS_INFO("u'(cab_) = %f",GetSigmoidDerivative(cab_));
-        ROS_INFO("---K-Hops Coeff[%d] = %f",i,-k_hops_coefficients_(i));
+        //ROS_INFO("u'(cab_) = %f",GetSigmoidDerivative(cab_));
+        //ROS_INFO("---K-Hops Coeff[%d] = %f",i,-k_hops_coefficients_(i));
     }
 
     this->CalculateLP();
 
-    //ROS_INFO("---EUCLIDIAN DISTANCES---");
+    ////ROS_INFO("---EUCLIDIAN DISTANCES---");
     //this->Print44DoubleMatrix(euclidian_distances_matrix_);
     /*double time_finish =ros::Time::now().toNSec();
-    ROS_INFO("*****time_finish = %f",time_finish);
+    //ROS_INFO("*****time_finish = %f",time_finish);
 
 
     double time_diff = time_finish - time_start;
-    ROS_INFO("*****time_diff = %f",time_diff);*/
+    //ROS_INFO("*****time_diff = %f",time_diff);*/
 }
 
 
@@ -139,14 +139,14 @@ void OdometryWrapperWithAlgorithm::AlgorithmMainMethod() {
 
 void OdometryWrapperWithAlgorithm::CalculateMatrices() {
 
-    //ROS_INFO("----------------aaaaaaaaaaaaa------------------------");
-    //ROS_INFO("firefly1_position_ = (%f,%f,%f)",all_fireflies_position_[0](0),all_fireflies_position_[0](1),all_fireflies_position_[0](2));
+    ////ROS_INFO("----------------aaaaaaaaaaaaa------------------------");
+    ////ROS_INFO("firefly1_position_ = (%f,%f,%f)",all_fireflies_position_[0](0),all_fireflies_position_[0](1),all_fireflies_position_[0](2));
 
     // Calculating the connectivity matrix
     for (int i = 0; i<4; i++) {
         for(int j = 0; j<4; j++) {
             double euclidian_distance = sqrt(pow((all_fireflies_position_[i](0)-all_fireflies_position_[j](0)),2) + pow((all_fireflies_position_[i](1)-all_fireflies_position_[j](1)),2) + pow((all_fireflies_position_[i](2)-all_fireflies_position_[j](2)),2));
-            //ROS_INFO("Euclidian distance (%i,%i) = %f",i,j,euclidian_distance);
+            ////ROS_INFO("Euclidian distance (%i,%i) = %f",i,j,euclidian_distance);
             if (euclidian_distance < ro_) {
                 connectivity_matrix_(i,j) = 1;
             }
@@ -156,7 +156,7 @@ void OdometryWrapperWithAlgorithm::CalculateMatrices() {
             else {
                 connectivity_matrix_(i,j) = exp((-5*(euclidian_distance - ro_))/(R_- ro_));
             }
-            //ROS_INFO("Connectivity matrix (%i,%i) = %f",i,j,connectivity_matrix_(i,j));
+            ////ROS_INFO("Connectivity matrix (%i,%i) = %f",i,j,connectivity_matrix_(i,j));
         }
     }
 
@@ -175,7 +175,7 @@ void OdometryWrapperWithAlgorithm::CalculateMatrices() {
             else {
                 weighted_laplacian_matrix_(i,j) = -connectivity_matrix_(i,j);
             }
-            //ROS_INFO("Weighted Laplacian matrix (%i,%i) = %f",i,j,weighted_laplacian_matrix_(i,j));
+            ////ROS_INFO("Weighted Laplacian matrix (%i,%i) = %f",i,j,weighted_laplacian_matrix_(i,j));
         }
     }
 }
@@ -229,10 +229,10 @@ void OdometryWrapperWithAlgorithm::CalculateLaplacianCoordinateDerivatives() {
                         L_derivatives_[counter](i,j) = 0;
                     }
                     //L_derivatives_[counter](i,i) = L_derivatives_[counter](i,i) - L_derivatives_[counter](i,j)
-                    //ROS_INFO("(%d,%d) = %f",i,j,L_derivatives_[counter](i,j));
+                    ////ROS_INFO("(%d,%d) = %f",i,j,L_derivatives_[counter](i,j));
                 }
             }
-            //ROS_INFO("---End of the matrix L[%d] robot counter[%d]---",counter,robot_counter);
+            ////ROS_INFO("---End of the matrix L[%d] robot counter[%d]---",counter,robot_counter);
             counter++;
         }
     }
@@ -251,7 +251,7 @@ void OdometryWrapperWithAlgorithm::CalculateEucilidanDistancesMatrix() {
     for(int i = 0; i<4; i++) {
         for(int j = 0; j<4; j++) {
             euclidian_distances_matrix_(i,j) = this->EuclidianDistanceFromTheOrigin(all_fireflies_position_[i] - all_fireflies_position_[j]);
-            //ROS_INFO("Distance between %d and %d is %f",i,j,euclidian_distances_matrix_(i,j));
+            ////ROS_INFO("Distance between %d and %d is %f",i,j,euclidian_distances_matrix_(i,j));
         }
     }
 }
@@ -261,8 +261,8 @@ void OdometryWrapperWithAlgorithm::CalculateTraceValues() {
     for(int i = 0; i<12; i++) {
         temp_matrices[i] = (dFiedler_dL_matrix_.transpose()) *L_derivatives_[i];
         trace_values_[i] = temp_matrices[i].trace();
-        //ROS_INFO("trace_values[%d] = %f",i,trace_values_[i]);
-        //ROS_INFO("------------------------------------------------");
+        ////ROS_INFO("trace_values[%d] = %f",i,trace_values_[i]);
+        ////ROS_INFO("------------------------------------------------");
     }
 }
 
@@ -368,10 +368,10 @@ void OdometryWrapperWithAlgorithm::CalculateLP() {
 
     /*for(int i = 0; i<moving_robot_constraints.rows; i++) {
         for(int j = 0; j<moving_robot_constraints.cols; j++) {
-            ROS_INFO("added cons (%d,%d) = %f",i,j,moving_robot_constraints.at<double>(i,j));
+            //ROS_INFO("added cons (%d,%d) = %f",i,j,moving_robot_constraints.at<double>(i,j));
         }
     }*/
-    /*ROS_INFO("Printing zeros I hope!");
+    /*//ROS_INFO("Printing zeros I hope!");
     cv::MatIterator_<double> _it = someMatObject[2].begin<double>();
     for(;_it!=z.end<double>(); _it++){
         std::cout << *_it << std::endl;
@@ -379,15 +379,15 @@ void OdometryWrapperWithAlgorithm::CalculateLP() {
 
     int t;
     t = cv::solveLP(c,A_LP,z);
-    ROS_INFO("solution status = %d",t); // ADD BEHAVIOUR IF THERE IS NO SOLUTION KEEP WHATHEVER YOU ARE DOING UNTIL THERE IS?!?!
+    //ROS_INFO("solution status = %d",t); // ADD BEHAVIOUR IF THERE IS NO SOLUTION KEEP WHATHEVER YOU ARE DOING UNTIL THERE IS?!?!
 
     // setting real results because the problem is reduced to a canonical LP form
     for(int i = 0; i<12; i++) {
         LP_solutions_[i] = z.at<double>(i,0) - z.at<double>(i+12,0);
-        //ROS_INFO("trace_values_[%d] = %f",i,trace_values_[i]);
-        ROS_INFO("LP_solutions_[%d] = %f",i,LP_solutions_[i]);
+        ////ROS_INFO("trace_values_[%d] = %f",i,trace_values_[i]);
+        //ROS_INFO("LP_solutions_[%d] = %f",i,LP_solutions_[i]);
         if (abs(LP_solutions_[i])>6) {
-            ROS_INFO("*****************************************************************+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
+            //ROS_INFO("*****************************************************************+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
         }
     }
 }
@@ -418,29 +418,29 @@ Eigen::Matrix<double,1,12> OdometryWrapperWithAlgorithm::Get_axy_Gradient(int x,
     // 2 loops over all possible coordinates of all possible robots r = robot, c = coordinate
     Eigen::Matrix<double,1,12> axy_gradient;
     int counter = 0;
-    //ROS_INFO("---PRINTING FOR (x,y) = (%d,%d)",x,y);
+    ////ROS_INFO("---PRINTING FOR (x,y) = (%d,%d)",x,y);
     for(int r=0; r<4; r++) {
         for(int c=0; c<3; c++) {
             if (r==x ^ r==y) { //cases for nonzero values, using xor operator to skip aii cases
                 if (r==x) {
                     int other_interacting_robot = y;
                     axy_gradient(counter) = -(this->GetSigmoidDerivative(R_- euclidian_distances_matrix_(x,y))*(all_fireflies_position_[r](c)-all_fireflies_position_[other_interacting_robot](c)))/euclidian_distances_matrix_(x,y);
-                    //ROS_INFO("---POTENTIAN FOR NAN =?= %f",euclidian_distances_matrix_(x,y));
+                    ////ROS_INFO("---POTENTIAN FOR NAN =?= %f",euclidian_distances_matrix_(x,y));
                 }
                 else if (r==y) {
                     int other_interacting_robot = x;
                     axy_gradient(counter) = -(this->GetSigmoidDerivative(R_- euclidian_distances_matrix_(x,y))*(all_fireflies_position_[r](c)-all_fireflies_position_[other_interacting_robot](c)))/euclidian_distances_matrix_(x,y);
-                    //ROS_INFO("---POTENTIAN FOR NAN =?= %f",euclidian_distances_matrix_(x,y));
+                    ////ROS_INFO("---POTENTIAN FOR NAN =?= %f",euclidian_distances_matrix_(x,y));
                 }
             }
             else { // zero in all but 6 cases (2 interacting robots * 3 coordinates)
                 axy_gradient(0,counter) = 0;
             }
-            //ROS_INFO("---da%d%d/dx%d%d = %f",x,y,r,c,axy_gradient(counter));
+            ////ROS_INFO("---da%d%d/dx%d%d = %f",x,y,r,c,axy_gradient(counter));
             counter++;
         }
     }
-    //ROS_INFO("--------------------------------");
+    ////ROS_INFO("--------------------------------");
     return axy_gradient;
 }
 
@@ -462,7 +462,7 @@ Eigen::Matrix<double,1,12> OdometryWrapperWithAlgorithm::GetCabGradientAndFillCa
     Eigen::Matrix<double,1,12> dummy_matrix = Eigen::Matrix<double,1,12>::Identity();
 
     this->CalculateAKappaMatrix(); // result in A_kappa_matrix_
-    //ROS_INFO("-----A KAPPA MATRIX-----");
+    ////ROS_INFO("-----A KAPPA MATRIX-----");
     //this->Print44DoubleMatrix(A_kappa_matrix_);
 
     this->CalculateAKappaGradientMatrix(); // result in A_kappa_gradient matrix_
@@ -473,7 +473,7 @@ Eigen::Matrix<double,1,12> OdometryWrapperWithAlgorithm::GetCabGradientAndFillCa
 
     for(int i = 0; i<k_+1; i++) { //filling C_connectivity_matrices and A_powers matrices
         A_powers[i] = temp_A;
-        //ROS_INFO("--- A^%d ---",i);
+        ////ROS_INFO("--- A^%d ---",i);
         //this->Print44DoubleMatrix(A_powers[i]);
         C_connectivity_matrices[i] = temp_C;
         temp_A = temp_A*A_kappa_matrix_;
@@ -527,53 +527,53 @@ void OdometryWrapperWithAlgorithm::OdometryFirefly4MethodCallback(const nav_msgs
 }
 
 void OdometryWrapperWithAlgorithm::PrintWeightedLaplacian(int laplacian_dimension) {
-    ROS_INFO("-----LAPLACIAN MATRIX-----");
+    //ROS_INFO("-----LAPLACIAN MATRIX-----");
     for(int i = 0; i<laplacian_dimension; i++) {
         for(int j= 0; j<laplacian_dimension; j++) {
-            ROS_INFO("(%i,%i) = %f",i,j,weighted_laplacian_matrix_(i,j));
+            //ROS_INFO("(%i,%i) = %f",i,j,weighted_laplacian_matrix_(i,j));
         }
     }
-    ROS_INFO("----------------------------------");
+    //ROS_INFO("----------------------------------");
 }
 
 void OdometryWrapperWithAlgorithm::PrintConnectivityMatrix(int connectivity_matrix_dimension) {
-    ROS_INFO("-----CONNECTIVITY MATRIX-----");
+    //ROS_INFO("-----CONNECTIVITY MATRIX-----");
     for(int i = 0; i<connectivity_matrix_dimension; i++) {
         for(int j= 0; j<connectivity_matrix_dimension; j++) {
-            ROS_INFO("(%i,%i) = %f",i,j,connectivity_matrix_(i,j));
+            //ROS_INFO("(%i,%i) = %f",i,j,connectivity_matrix_(i,j));
         }
     }
-    ROS_INFO("----------------------------------");
+    //ROS_INFO("----------------------------------");
 }
 
 void OdometryWrapperWithAlgorithm::PrintDFiedlerDL(int dF_dL_dimension) {
-    ROS_INFO("-----dFiedler/dL-----");
+    //ROS_INFO("-----dFiedler/dL-----");
     for(int i = 0; i<dF_dL_dimension; i++) {
         for(int j= 0; j<dF_dL_dimension; j++) {
-            ROS_INFO("(%i,%i) = %f",i,j,dFiedler_dL_matrix_(i,j));
+            //ROS_INFO("(%i,%i) = %f",i,j,dFiedler_dL_matrix_(i,j));
         }
     }
-    ROS_INFO("----------------------------------");
+    //ROS_INFO("----------------------------------");
 }
 
 void OdometryWrapperWithAlgorithm::Print44DoubleMatrix(Eigen::Matrix<double,4,4> m) {
     for(int i = 0; i<4; i++) {
         for(int j= 0; j<4; j++) {
-            ROS_INFO("(%i,%i) = %f",i,j,m(i,j));
+            //ROS_INFO("(%i,%i) = %f",i,j,m(i,j));
         }
     }
-    ROS_INFO("----------------------------------");
+    //ROS_INFO("----------------------------------");
 }
 
 /*void OdometryWrapperWithAlgorithm::PrintLaplaciansOverCoordinatesMatrices(const ros::TimerEvent& event1) {
-    ROS_INFO("??????????????????????????????????????????");
+    //ROS_INFO("??????????????????????????????????????????");
     for(int k = 0; k++; k<12) {
         for(int i = 0; i<4; i++) {
             for(int j= 0; j<4; j++) {
-                ROS_INFO("(%d,%d) = %f",i,j,L_derivatives_[k](i,j));
+                //ROS_INFO("(%d,%d) = %f",i,j,L_derivatives_[k](i,j));
             }
         }
-        ROS_INFO("----------------------------------");
+        //ROS_INFO("----------------------------------");
     }
 } */
 
@@ -601,7 +601,7 @@ int main(int argc, char** argv) {
   ros::Publisher array_pub = nh.advertise<rotors_gazebo::Num>("array", 100);
 
 
-  ROS_INFO("Started global_control_K_node.");
+  //ROS_INFO("Started global_control_K_node.");
 
   ros::V_string args;
   ros::removeROSArgs(argc, argv, args);
@@ -610,7 +610,7 @@ int main(int argc, char** argv) {
   while(ros::ok()){
 
     /*double time_start =ros::Time::now().toSec();
-    ROS_INFO("*****time_start = %f",time_start);*/
+    //ROS_INFO("*****time_start = %f",time_start);*/
 
     rotors_gazebo::Num array;
     array.data.clear();
@@ -632,13 +632,13 @@ int main(int argc, char** argv) {
     loop_rate.sleep();
 
     /*double time_finish =ros::Time::now().toSec();
-    ROS_INFO("*****time_finish = %f",time_finish);
+    //ROS_INFO("*****time_finish = %f",time_finish);
 
     double time_diff = time_finish - time_start;
-    ROS_INFO("*****time_diff = %f",time_diff);*/
+    //ROS_INFO("*****time_diff = %f",time_diff);*/
 
 
-    ROS_INFO("----END OF THE MAIN METHOD----");
+    //ROS_INFO("----END OF THE MAIN METHOD----");
 }
 return 0;
 }
