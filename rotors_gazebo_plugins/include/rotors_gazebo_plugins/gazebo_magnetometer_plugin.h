@@ -65,7 +65,7 @@ class GazeboMagnetometerPlugin : public ModelPlugin {
   // Pointer to the update event connection
   event::ConnectionPtr updateConnection_;
 
-  math::Vector3 mag_W_;
+  ignition::math::Vector3<double> mag_W_;
 
   sensor_msgs::MagneticField mag_message_;
 

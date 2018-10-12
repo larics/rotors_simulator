@@ -35,7 +35,7 @@ GazeboImuPlugin::GazeboImuPlugin()
       velocity_prev_W_(0, 0, 0) {}
 
 GazeboImuPlugin::~GazeboImuPlugin() {
-  event::Events::DisconnectWorldUpdateBegin(updateConnection_);
+  updateConnection_.reset();
   if (node_handle_) {
     node_handle_->shutdown();
     delete node_handle_;
@@ -97,7 +97,7 @@ void GazeboImuPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf) {
                       imu_parameters_.accelerometer_turn_on_bias_sigma,
                       imu_parameters_.accelerometer_turn_on_bias_sigma);
 
-  last_time_ = world_->GetSimTime();
+  last_time_ = world_->SimTime();
 
   // Listen to the update event. This event is broadcast every
   // simulation iteration.
@@ -136,8 +136,8 @@ void GazeboImuPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf) {
   // Orientation estimate covariance (no estimate provided).
   imu_message_.orientation_covariance[0] = -1.0;
 
-  gravity_W_ = world_->GetPhysicsEngine()->GetGravity();
-  imu_parameters_.gravity_magnitude = gravity_W_.GetLength();
+  gravity_W_ = world_->Gravity();
+  imu_parameters_.gravity_magnitude = gravity_W_.Length();
 
   standard_normal_distribution_ = std::normal_distribution<double>(0.0, 1.0);
 
@@ -213,35 +213,35 @@ void GazeboImuPlugin::addNoise(Eigen::Vector3d* linear_acceleration,
 
 // This gets called by the world update start event.
 void GazeboImuPlugin::OnUpdate(const common::UpdateInfo& _info) {
-  common::Time current_time  = world_->GetSimTime();
+  common::Time current_time  = world_->SimTime();
   double dt = (current_time - last_time_).Double();
   last_time_ = current_time;
   double t = current_time.Double();
 
-  math::Pose T_W_I = link_->GetWorldPose(); //TODO(burrimi): Check tf.
-  math::Quaternion C_W_I = T_W_I.rot;
+  ignition::math::Pose3<double> T_W_I = link_->WorldPose(); //TODO(burrimi): Check tf.
+  ignition::math::Quaternion<double> C_W_I = T_W_I.Rot();
 
 #if GAZEBO_MAJOR_VERSION < 5
   math::Vector3 velocity_current_W = link_->GetWorldLinearVel();
   // link_->GetRelativeLinearAccel() does not work sometimes with old gazebo versions.
   // This issue is solved in gazebo 5.
-  math::Vector3 acceleration = (velocity_current_W - velocity_prev_W_) / dt;
-  math::Vector3 acceleration_I =
+  Vector3 acceleration = (velocity_current_W - velocity_prev_W_) / dt;
+  Vector3 acceleration_I =
       C_W_I.RotateVectorReverse(acceleration - gravity_W_);
 
   velocity_prev_W_ = velocity_current_W;
 #else
-  math::Vector3 acceleration_I = link_->GetRelativeLinearAccel() - C_W_I.RotateVectorReverse(gravity_W_);
+  ignition::math::Vector3<double> acceleration_I = link_->RelativeLinearAccel() - C_W_I.RotateVectorReverse(gravity_W_);
 #endif
 
-  math::Vector3 angular_vel_I = link_->GetRelativeAngularVel();
+  ignition::math::Vector3<double> angular_vel_I = link_->RelativeAngularVel();
 
-  Eigen::Vector3d linear_acceleration_I(acceleration_I.x,
-                                        acceleration_I.y,
-                                        acceleration_I.z);
-  Eigen::Vector3d angular_velocity_I(angular_vel_I.x,
-                                     angular_vel_I.y,
-                                     angular_vel_I.z);
+  Eigen::Vector3d linear_acceleration_I(acceleration_I.X(),
+                                        acceleration_I.Y(),
+                                        acceleration_I.Z());
+  Eigen::Vector3d angular_velocity_I(angular_vel_I.X(),
+                                     angular_vel_I.Y(),
+                                     angular_vel_I.Z());
 
   addNoise(&linear_acceleration_I, &angular_velocity_I, dt);
 

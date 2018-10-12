@@ -94,9 +94,9 @@ class GazeboMavlinkInterface : public ModelPlugin {
   mavlink_hil_sensor_t hil_sensor_msg_;
   mavlink_hil_gps_t hil_gps_msg_;
 
-  math::Vector3 gravity_W_;
-  math::Vector3 velocity_prev_W_;
-  math::Vector3 mag_W_;
+  ignition::math::Vector3 gravity_W_;
+  ignition::math::Vector3 velocity_prev_W_;
+  ignition::math::Vector3 mag_W_;
 
   double ref_lat_;
   double ref_lon_;

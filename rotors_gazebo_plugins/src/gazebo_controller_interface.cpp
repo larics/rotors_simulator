@@ -24,7 +24,7 @@
 namespace gazebo {
 
 GazeboControllerInterface::~GazeboControllerInterface() {
-  event::Events::DisconnectWorldUpdateBegin(updateConnection_);
+  updateConnection_.reset();
   if (node_handle_) {
     node_handle_->shutdown();
     delete node_handle_;
@@ -72,7 +72,7 @@ void GazeboControllerInterface::OnUpdate(const common::UpdateInfo& /*_info*/) {
     return;
   }
 
-  common::Time now = world_->GetSimTime();
+  common::Time now = world_->SimTime();
 
   mav_msgs::ActuatorsPtr turning_velocities_msg(new mav_msgs::Actuators);
 

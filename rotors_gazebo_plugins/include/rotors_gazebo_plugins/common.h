@@ -126,9 +126,9 @@ Eigen::Quaternion<typename Derived::Scalar> QuaternionFromSmallAngle(const Eigen
 
 template<class In, class Out>
 void copyPosition(const In& in, Out* out) {
-  out->x = in.x;
-  out->y = in.y;
-  out->z = in.z;
+  out->x = in.X();
+  out->y = in.Y();
+  out->z = in.Z();
 }
 
 #endif /* ROTORS_GAZEBO_PLUGINS_COMMON_H_ */

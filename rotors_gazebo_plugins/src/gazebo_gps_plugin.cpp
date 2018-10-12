@@ -24,7 +24,7 @@ GazeboGpsPlugin::GazeboGpsPlugin()
       random_generator_(random_device_()) {}
 
 GazeboGpsPlugin::~GazeboGpsPlugin() {
-  this->parent_sensor_->DisconnectUpdated(this->updateConnection_);
+  this->updateConnection_.reset();
   if (node_handle_) {
     node_handle_->shutdown();
     delete node_handle_;
@@ -59,7 +59,7 @@ void GazeboGpsPlugin::Load(sensors::SensorPtr _sensor, sdf::ElementPtr _sdf) {
   std::string frame_id = link_name;
 
   // Get the pointer to the link that holds the sensor.
-  link_ = boost::dynamic_pointer_cast<physics::Link>(world_->GetByName(link_name));
+  link_ = boost::dynamic_pointer_cast<physics::Link>(world_->BaseByName(link_name));
   if (link_ == NULL)
     gzerr << "[gazebo_gps_plugin] Couldn't find specified link \"" << link_name << "\"\n";
 
@@ -113,10 +113,10 @@ void GazeboGpsPlugin::OnUpdate() {
   common::Time current_time;
 
   // Get the linear velocity in the world frame.
-  math::Vector3 W_ground_speed_W_L = link_->GetWorldLinearVel();
+  ignition::math::Vector3<double> W_ground_speed_W_L = link_->WorldLinearVel();
 
   // Apply noise to ground speed.
-  W_ground_speed_W_L += math::Vector3(ground_speed_n_[0](random_generator_),
+  W_ground_speed_W_L += ignition::math::Vector3<double>(ground_speed_n_[0](random_generator_),
           ground_speed_n_[1](random_generator_),
           ground_speed_n_[2](random_generator_));
 
@@ -138,9 +138,9 @@ void GazeboGpsPlugin::OnUpdate() {
   gps_message_.header.stamp.nsec = current_time.nsec;
 
   // Fill the ground speed message.
-  ground_speed_message_.twist.linear.x = W_ground_speed_W_L.x;
-  ground_speed_message_.twist.linear.y = W_ground_speed_W_L.y;
-  ground_speed_message_.twist.linear.z = W_ground_speed_W_L.z;
+  ground_speed_message_.twist.linear.x = W_ground_speed_W_L.X();
+  ground_speed_message_.twist.linear.y = W_ground_speed_W_L.Y();
+  ground_speed_message_.twist.linear.z = W_ground_speed_W_L.Z();
   ground_speed_message_.header.stamp.sec = current_time.sec;
   ground_speed_message_.header.stamp.nsec = current_time.nsec;
 

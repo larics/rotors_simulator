@@ -27,7 +27,7 @@
 namespace gazebo {
 
 GazeboMultirotorBasePlugin::~GazeboMultirotorBasePlugin() {
-  event::Events::DisconnectWorldUpdateBegin(update_connection_);
+  update_connection_.reset();
   if (node_handle_) {
     node_handle_->shutdown();
     delete node_handle_;
@@ -78,7 +78,7 @@ void GazeboMultirotorBasePlugin::Load(physics::ModelPtr _model, sdf::ElementPtr 
 // This gets called by the world update start event.
 void GazeboMultirotorBasePlugin::OnUpdate(const common::UpdateInfo& _info) {
   // Get the current simulation time.
-  common::Time now = world_->GetSimTime();
+  common::Time now = world_->SimTime();
   mav_msgs::ActuatorsPtr msg(new mav_msgs::Actuators);
   msg->angular_velocities.resize(motor_joints_.size());
   sensor_msgs::JointStatePtr joint_state_msg(new sensor_msgs::JointState);
@@ -89,7 +89,7 @@ void GazeboMultirotorBasePlugin::OnUpdate(const common::UpdateInfo& _info) {
     double motor_rot_vel = m->second->GetVelocity(0) * rotor_velocity_slowdown_sim_;
     msg->angular_velocities[m->first] = motor_rot_vel;
     joint_state_msg->name[m->first] = m->second->GetName();
-    joint_state_msg->position[m->first] = m->second->GetAngle(0).Radian();
+    joint_state_msg->position[m->first] = m->second->Position(0);
   }
   joint_state_msg->header.stamp.sec = now.sec;
   joint_state_msg->header.stamp.nsec = now.nsec;

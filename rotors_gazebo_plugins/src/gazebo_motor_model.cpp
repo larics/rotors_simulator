@@ -23,7 +23,7 @@
 namespace gazebo {
 
 GazeboMotorModel::~GazeboMotorModel() {
-  event::Events::DisconnectWorldUpdateBegin(updateConnection_);
+  updateConnection_.reset();
   if (node_handle_) {
     node_handle_->shutdown();
     delete node_handle_;
@@ -133,9 +133,9 @@ void GazeboMotorModel::VelocityCallback(const mav_msgs::ActuatorsConstPtr& rot_v
 
 void GazeboMotorModel::WindSpeedCallback(const rotors_comm::WindSpeedConstPtr& wind_speed) {
   // TODO(burrimi): Transform velocity to world frame if frame_id is set to something else.
-  wind_speed_W_.x = wind_speed->velocity.x;
-  wind_speed_W_.y = wind_speed->velocity.y;
-  wind_speed_W_.z = wind_speed->velocity.z;
+  wind_speed_W_.X(wind_speed->velocity.x);
+  wind_speed_W_.Y(wind_speed->velocity.y);
+  wind_speed_W_.Z(wind_speed->velocity.z);
 }
 
 void GazeboMotorModel::UpdateForcesAndMoments() {
@@ -146,30 +146,30 @@ void GazeboMotorModel::UpdateForcesAndMoments() {
   double real_motor_velocity = motor_rot_vel_ * rotor_velocity_slowdown_sim_;
   double force = real_motor_velocity * real_motor_velocity * motor_constant_;
   // Apply a force to the link.
-  link_->AddRelativeForce(math::Vector3(0, 0, force));
+  link_->AddRelativeForce(ignition::math::Vector3<double>(0, 0, force));
 
   // Forces from Philppe Martin's and Erwan Salaün's
   // 2010 IEEE Conference on Robotics and Automation paper
   // The True Role of Accelerometer Feedback in Quadrotor Control
   // - \omega * \lambda_1 * V_A^{\perp}
-  math::Vector3 joint_axis = joint_->GetGlobalAxis(0);
-  math::Vector3 body_velocity_W = link_->GetWorldLinearVel();
-  math::Vector3 relative_wind_velocity_W = body_velocity_W - wind_speed_W_;
-  math::Vector3 body_velocity_perpendicular = relative_wind_velocity_W - (relative_wind_velocity_W.Dot(joint_axis) * joint_axis);
-  math::Vector3 air_drag = -std::abs(real_motor_velocity) * rotor_drag_coefficient_ * body_velocity_perpendicular;
+  ignition::math::Vector3<double> joint_axis = joint_->GlobalAxis(0);
+  ignition::math::Vector3<double> body_velocity_W = link_->WorldLinearVel();
+  ignition::math::Vector3<double> relative_wind_velocity_W = body_velocity_W - wind_speed_W_;
+  ignition::math::Vector3<double> body_velocity_perpendicular = relative_wind_velocity_W - (relative_wind_velocity_W.Dot(joint_axis) * joint_axis);
+  ignition::math::Vector3<double> air_drag = -std::abs(real_motor_velocity) * rotor_drag_coefficient_ * body_velocity_perpendicular;
   // Apply air_drag to link.
   link_->AddForce(air_drag);
   // Moments
   // Getting the parent link, such that the resulting torques can be applied to it.
   physics::Link_V parent_links = link_->GetParentJointsLinks();
   // The tansformation from the parent_link to the link_.
-  math::Pose pose_difference = link_->GetWorldCoGPose() - parent_links.at(0)->GetWorldCoGPose();
-  math::Vector3 drag_torque(0, 0, -turning_direction_ * force * moment_constant_);
+  ignition::math::Pose3<double> pose_difference = link_->WorldCoGPose() - parent_links.at(0)->WorldCoGPose();
+  ignition::math::Vector3<double> drag_torque(0, 0, -turning_direction_ * force * moment_constant_);
   // Transforming the drag torque into the parent frame to handle arbitrary rotor orientations.
-  math::Vector3 drag_torque_parent_frame = pose_difference.rot.RotateVector(drag_torque);
+  ignition::math::Vector3<double> drag_torque_parent_frame = pose_difference.Rot().RotateVector(drag_torque);
   parent_links.at(0)->AddRelativeTorque(drag_torque_parent_frame);
 
-  math::Vector3 rolling_moment;
+  ignition::math::Vector3<double> rolling_moment;
   // - \omega * \mu_1 * V_A^{\perp}
   rolling_moment = -std::abs(real_motor_velocity) * rolling_moment_coefficient_ * body_velocity_perpendicular;
   parent_links.at(0)->AddTorque(rolling_moment);

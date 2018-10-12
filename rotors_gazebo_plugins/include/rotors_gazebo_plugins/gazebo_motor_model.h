@@ -133,7 +133,7 @@ class GazeboMotorModel : public MotorModel, public ModelPlugin {
   void WindSpeedCallback(const rotors_comm::WindSpeedConstPtr& wind_speed);
 
   std::unique_ptr<FirstOrderFilter<double>> rotor_velocity_filter_;
-  math::Vector3 wind_speed_W_;
+  ignition::math::Vector3<double> wind_speed_W_;
 };
 }
 

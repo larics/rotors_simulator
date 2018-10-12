@@ -95,7 +95,7 @@ void GazeboMavlinkInterface::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf
   gps_update_interval_ = 1000000000.0 / gps_freq;  // GPS update interval, in nanoseconds
 
   gravity_W_ = world_->GetPhysicsEngine()->GetGravity();
-  mag_W_ = math::Vector3(ref_mag_north, ref_mag_east, ref_mag_down);
+  mag_W_ = ignition::math::Vector3(ref_mag_north, ref_mag_east, ref_mag_down);
 }
 
 // This gets called by the world update start event.
@@ -105,10 +105,10 @@ void GazeboMavlinkInterface::OnUpdate(const common::UpdateInfo& _info) {
   last_time_ = current_time;
 
   // Use the models' world position for GPS, velocity, and pressure alt.
-  math::Pose T_W_I = model_->GetWorldPose();
-  math::Vector3 pos_W_I = T_W_I.pos;
-  math::Vector3 velocity_current_W = model_->GetWorldLinearVel();
-  math::Vector3 velocity_current_W_xy = velocity_current_W;
+  ignition::math::Pose3 T_W_I = model_->GetWorldPose();
+  ignition::math::Vector3 pos_W_I = T_W_I.pos;
+  ignition::math::Vector3 velocity_current_W = model_->GetWorldLinearVel();
+  ignition::math::Vector3 velocity_current_W_xy = velocity_current_W;
   velocity_current_W_xy.z = 0.0;
   
   common::Time gps_update(gps_update_interval_);
@@ -201,16 +201,16 @@ void GazeboMavlinkInterface::ImuCallback(const sensor_msgs::ImuConstPtr& imu_mes
   mavlink_message_t mmsg;
 
   // Use the models'world position for pressure alt.
-  math::Pose T_W_I = model_->GetWorldPose();
-  math::Vector3 pos_W_I = T_W_I.pos;
+  ignition::math::Pose3 T_W_I = model_->GetWorldPose();
+  ignition::math::Vector3 pos_W_I = T_W_I.pos;
 
-  math::Quaternion C_W_I;
+  ignition::math::Quaternion C_W_I;
   C_W_I.w = imu_message->orientation.w;
   C_W_I.x = imu_message->orientation.x;
   C_W_I.y = imu_message->orientation.y;
   C_W_I.z = imu_message->orientation.z;
 
-  math::Vector3 mag_I = C_W_I.RotateVectorReverse(mag_W_);
+  ignition::math::Vector3 mag_I = C_W_I.RotateVectorReverse(mag_W_);
 
   hil_sensor_msg_.time_usec = imu_message->header.stamp.nsec * 1000;
   hil_sensor_msg_.xacc = imu_message->linear_acceleration.x;

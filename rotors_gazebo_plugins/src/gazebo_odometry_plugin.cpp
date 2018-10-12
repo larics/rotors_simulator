@@ -32,7 +32,7 @@
 namespace gazebo {
 
 GazeboOdometryPlugin::~GazeboOdometryPlugin() {
-  event::Events::DisconnectWorldUpdateBegin(updateConnection_);
+  updateConnection_.reset();
   if (node_handle_) {
     node_handle_->shutdown();
     delete node_handle_;
@@ -109,7 +109,7 @@ void GazeboOdometryPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf) 
   getSdfParam<double>(_sdf, "unknownDelay", unknown_delay_, unknown_delay_);
   getSdfParam<double>(_sdf, "covarianceImageScale", covariance_image_scale_, covariance_image_scale_);
 
-  parent_link_ = world_->GetEntity(parent_frame_id_);
+  parent_link_ = world_->EntityByName(parent_frame_id_);
   if (parent_link_ == NULL && parent_frame_id_ != kDefaultParentFrameId) {
     gzthrow("[gazebo_odometry_plugin] Couldn't find specified parent link \"" << parent_frame_id_ << "\".");
   }
@@ -185,33 +185,33 @@ void GazeboOdometryPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf) 
 void GazeboOdometryPlugin::OnUpdate(const common::UpdateInfo& _info) {
   // C denotes child frame, P parent frame, and W world frame.
   // Further C_pose_W_P denotes pose of P wrt. W expressed in C.
-  math::Pose W_pose_W_C = link_->GetWorldCoGPose();
-  math::Vector3 C_linear_velocity_W_C = link_->GetRelativeLinearVel();
-  math::Vector3 C_angular_velocity_W_C = link_->GetRelativeAngularVel();
+  ignition::math::Pose3<double> W_pose_W_C = link_->WorldCoGPose();
+  ignition::math::Vector3<double> C_linear_velocity_W_C = link_->RelativeLinearVel();
+  ignition::math::Vector3<double> C_angular_velocity_W_C = link_->RelativeAngularVel();
 
-  math::Vector3 gazebo_linear_velocity = C_linear_velocity_W_C;
-  math::Vector3 gazebo_angular_velocity = C_angular_velocity_W_C;
-  math::Pose gazebo_pose = W_pose_W_C;
+  ignition::math::Vector3<double> gazebo_linear_velocity = C_linear_velocity_W_C;
+  ignition::math::Vector3<double> gazebo_angular_velocity = C_angular_velocity_W_C;
+  ignition::math::Pose3<double> gazebo_pose = W_pose_W_C;
 
   if (parent_frame_id_ != kDefaultParentFrameId) {
-    math::Pose W_pose_W_P = parent_link_->GetWorldPose();
-    math::Vector3 P_linear_velocity_W_P = parent_link_->GetRelativeLinearVel();
-    math::Vector3 P_angular_velocity_W_P = parent_link_->GetRelativeAngularVel();
-    math::Pose C_pose_P_C_ = W_pose_W_C - W_pose_W_P;
-    math::Vector3 C_linear_velocity_P_C;
+    ignition::math::Pose3<double> W_pose_W_P = parent_link_->WorldPose();
+    ignition::math::Vector3<double> P_linear_velocity_W_P = parent_link_->RelativeLinearVel();
+    ignition::math::Vector3<double> P_angular_velocity_W_P = parent_link_->RelativeAngularVel();
+    ignition::math::Pose3<double> C_pose_P_C_ = W_pose_W_C - W_pose_W_P;
+    ignition::math::Vector3<double> C_linear_velocity_P_C;
     // \prescript{}{C}{\dot{r}}_{PC} = -R_{CP}
     //       \cdot \prescript{}{P}{\omega}_{WP} \cross \prescript{}{P}{r}_{PC}
     //       + \prescript{}{C}{v}_{WC}
     //                                 - R_{CP} \cdot \prescript{}{P}{v}_{WP}
-    C_linear_velocity_P_C = - C_pose_P_C_.rot.GetInverse()
-                            * P_angular_velocity_W_P.Cross(C_pose_P_C_.pos)
+    C_linear_velocity_P_C = - C_pose_P_C_.Rot().Inverse()
+                            * P_angular_velocity_W_P.Cross(C_pose_P_C_.Pos())
                             + C_linear_velocity_W_C
-                            - C_pose_P_C_.rot.GetInverse() * P_linear_velocity_W_P;
+                            - C_pose_P_C_.Rot().Inverse() * P_linear_velocity_W_P;
 
     // \prescript{}{C}{\omega}_{PC} = \prescript{}{C}{\omega}_{WC}
     //       - R_{CP} \cdot \prescript{}{P}{\omega}_{WP}
     gazebo_angular_velocity = C_angular_velocity_W_C
-                              - C_pose_P_C_.rot.GetInverse() * P_angular_velocity_W_P;
+                              - C_pose_P_C_.Rot().Inverse() * P_angular_velocity_W_P;
     gazebo_linear_velocity = C_linear_velocity_P_C;
     gazebo_pose = C_pose_P_C_;
   }
@@ -225,8 +225,8 @@ void GazeboOdometryPlugin::OnUpdate(const common::UpdateInfo& _info) {
     // Image is always centered around the origin:
     int width = covariance_image_.cols;
     int height = covariance_image_.rows;
-    int x = static_cast<int>(std::floor(gazebo_pose.pos.x / covariance_image_scale_)) + width / 2;
-    int y = static_cast<int>(std::floor(gazebo_pose.pos.y / covariance_image_scale_)) + height / 2;
+    int x = static_cast<int>(std::floor(gazebo_pose.Pos().X() / covariance_image_scale_)) + width / 2;
+    int y = static_cast<int>(std::floor(gazebo_pose.Pos().Y() / covariance_image_scale_)) + height / 2;
 
     if (x >= 0 && x < width && y >= 0 && y < height) {
       uint8_t pixel_value = covariance_image_.at<uint8_t>(y, x);
@@ -241,20 +241,20 @@ void GazeboOdometryPlugin::OnUpdate(const common::UpdateInfo& _info) {
     nav_msgs::Odometry odometry;
     odometry.header.frame_id = parent_frame_id_;
     odometry.header.seq = odometry_sequence_++;
-    odometry.header.stamp.sec = (world_->GetSimTime()).sec + ros::Duration(unknown_delay_).sec;
-    odometry.header.stamp.nsec = (world_->GetSimTime()).nsec + ros::Duration(unknown_delay_).nsec;
+    odometry.header.stamp.sec = (world_->SimTime()).sec + ros::Duration(unknown_delay_).sec;
+    odometry.header.stamp.nsec = (world_->SimTime()).nsec + ros::Duration(unknown_delay_).nsec;
     odometry.child_frame_id = child_frame_id_;
-    copyPosition(gazebo_pose.pos, &odometry.pose.pose.position);
-    odometry.pose.pose.orientation.w = gazebo_pose.rot.w;
-    odometry.pose.pose.orientation.x = gazebo_pose.rot.x;
-    odometry.pose.pose.orientation.y = gazebo_pose.rot.y;
-    odometry.pose.pose.orientation.z = gazebo_pose.rot.z;
-    odometry.twist.twist.linear.x = gazebo_linear_velocity.x;
-    odometry.twist.twist.linear.y = gazebo_linear_velocity.y;
-    odometry.twist.twist.linear.z = gazebo_linear_velocity.z;
-    odometry.twist.twist.angular.x = gazebo_angular_velocity.x;
-    odometry.twist.twist.angular.y = gazebo_angular_velocity.y;
-    odometry.twist.twist.angular.z = gazebo_angular_velocity.z;
+    copyPosition(gazebo_pose.Pos(), &odometry.pose.pose.position);
+    odometry.pose.pose.orientation.w = gazebo_pose.Rot().W();
+    odometry.pose.pose.orientation.x = gazebo_pose.Rot().X();
+    odometry.pose.pose.orientation.y = gazebo_pose.Rot().Y();
+    odometry.pose.pose.orientation.z = gazebo_pose.Rot().Z();
+    odometry.twist.twist.linear.x = gazebo_linear_velocity.X();
+    odometry.twist.twist.linear.y = gazebo_linear_velocity.Y();
+    odometry.twist.twist.linear.z = gazebo_linear_velocity.Z();
+    odometry.twist.twist.angular.x = gazebo_angular_velocity.X();
+    odometry.twist.twist.angular.y = gazebo_angular_velocity.Y();
+    odometry.twist.twist.angular.z = gazebo_angular_velocity.Z();
 
     if (publish_odometry)
       odometry_queue_.push_back(std::make_pair(gazebo_sequence_ + measurement_delay_, odometry));
