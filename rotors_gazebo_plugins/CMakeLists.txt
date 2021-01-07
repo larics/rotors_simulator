@@ -43,6 +43,7 @@ if (BUILD_MAVLINK_INTERFACE)
   message(STATUS "Added mavros dependency")
 endif()
 
+set(CMAKE_CXX_STANDARD 17)
 
 find_package(Eigen3 REQUIRED)
 find_package(octomap REQUIRED)
