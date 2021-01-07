@@ -14,7 +14,6 @@ if (BUILD_MAVLINK_INTERFACE)
   message(STATUS "Adding mavros dependency and building mavlink_interface_plugin")
 endif ()
 
-add_definitions(-std=c++11)
 
 add_definitions(
   -DMAVLINK_INTERFACE=${MAVLINK_INTERFACE}
